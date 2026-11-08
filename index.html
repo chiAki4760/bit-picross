@@ -114,7 +114,7 @@ button.dark{background:linear-gradient(#4a3f8a,#2d2660);color:#f3ead2;box-shadow
 </head>
 <body>
 <h1 id="title">BIT PICROSS</h1>
-<div class="sub">二進数・16進数であそぶパズル</div>
+<div class="sub">2進数・16進数であそぶパズル</div>
 
 <div class="tabs">
   <button data-tab="pic">ピクロス</button><button data-tab="bin">ビナイロ</button><button data-tab="rec">きろく</button>
@@ -165,7 +165,7 @@ button.dark{background:linear-gradient(#4a3f8a,#2d2660);color:#f3ead2;box-shadow
     <h2>CLEAR!</h2>
     <div id="brtime"></div>
     <div class="rom" id="brom"></div>
-    <div style="font-size:13px;opacity:.8;margin-bottom:10px">完成した盤面の各行を、二進数として読んだ数です</div>
+    <div style="font-size:13px;opacity:.8;margin-bottom:10px">完成した盤面の各行を、2進数として読んだ数です</div>
     <button id="bNext">つぎの問題へ ▶</button>
   </div>
 </section>
@@ -516,8 +516,8 @@ function showBreak(){
  const name=p.k==='r'?`よこ ${p.i+1}行目`:`たて ${p.i+1}列目（上から読む）`;
  let calc;
  if(b===16){const lv=bitsVal(vals.slice(0,split)),rv=bitsVal(vals.slice(split));
-  calc=`左${split}枚：${sum(all.slice(0,split))} → ${lv.toString(16).toUpperCase()}<br>右4枚：${sum(all.slice(split))} → ${rv.toString(16).toUpperCase()}<br>16進数で <b>${fmt(v,16)}</b>（十進法では ${v}）`;
- }else calc=`${sum(all)}<br>十進法で <b>${v}</b>`;
+  calc=`左${split}枚：${sum(all.slice(0,split))} → ${lv.toString(16).toUpperCase()}<br>右4枚：${sum(all.slice(split))} → ${rv.toString(16).toUpperCase()}<br>16進数で <b>${fmt(v,16)}</b>（10進数では ${v}）`;
+ }else calc=`${sum(all)}<br>10進数で <b>${v}</b>`;
  ref.innerHTML=`${name}：${vals.join('')}<br><div class="brk" style="grid-template-columns:repeat(${n+(b===16?1:0)},auto)">${top}${bot}</div><br>${calc}`;
 }
 $('bNew').onclick=()=>{beep(784);newBin()};
@@ -557,7 +557,7 @@ const HOW={
  pic:`<h3>ピクロスのしくみ</h3>
   <p>タイルには「重さ」がついています。右から <code>1・2・4・8</code>… と、左へ行くたびに2倍になります。</p>
   <p>左の数字になるように、タイルを選んで足し算します。<br>例：<code>13</code> = 8 + 4 + 1<br>→ タイルは <code>00001101</code>（1が「うめる」）</p>
-  <p>これが<b>二進数</b>。コンピュータは全部これで数を数えています。</p>
+  <p>これが<b>2進数</b>。コンピュータは全部これで数を数えています。</p>
   <h3>16進数</h3>
   <p>タイル4枚で 0〜15 を表せます。10以上は1文字で書くために英字を使います。<br><code>A=10 B=11 C=12 D=13 E=14 F=15</code></p>
   <p>16進モードでは、金の線で左右4枚ずつに分かれます。<code>3C</code> なら、左4枚で <code>3</code>（2+1）、右4枚で <code>C</code>（8+4）。</p>
@@ -566,8 +566,8 @@ const HOW={
   <p>すべてのマスを <code>1</code>（色のタイル）か <code>0</code>（白いタイル）でうめます。</p>
   <p>① 同じ数字が <b>3つ続いてはいけない</b>（たて・よこ）<br>② どの行・列も、<b>1と0が同じ数</b><br>③ <b>まったく同じ並び</b>の行（列）を2つ作ってはいけない</p>
   <p>コツ：<code>1 1 _</code> の横は必ず <code>0</code>。<code>1 _ 1</code> の間も <code>0</code>。</p>
-  <h3>二進数として読む</h3>
-  <p>うめ終わった行は、右に<b>二進数として読んだ数</b>が出ます。下の数字は、列を上から読んだ数です。16進モードでは金の線の右4枚が1けた目、左が2けた目になります。</p>
+  <h3>2進数として読む</h3>
+  <p>うめ終わった行は、右に<b>2進数として読んだ数</b>が出ます。下の数字は、列を上から読んだ数です。16進モードでは金の線の右4枚が1けた目、左が2けた目になります。</p>
   <p>赤くなったら、どこかがルール違反です。</p>
   <p>うまった行・列の数字をタップすると、「32 + 16 + 8 = 56」のような<b>計算の内訳</b>が下に出ます。もう一度タップで閉じます。</p>`
 };
