@@ -416,7 +416,7 @@ function buildBin(){
  bgrid.parentElement.style.setProperty('--t',t);bgrid.parentElement.parentElement.style.setProperty('--t',t);
  bgrid.style.gridTemplateColumns=`repeat(${n-4},var(--t)) 6px repeat(4,var(--t)) calc(var(--t)*1.35)`;
  for(let r=0;r<n;r++){
-  if(r===n-4){const h=document.createElement('div');h.className='div hdiv';h.style.gridColumn=`1 / span ${n+1}`;bgrid.appendChild(h)}
+  if(r===n-4){const h=document.createElement('div');h.className='div hdiv';h.style.gridColumn=`1 / span ${n+1}`;bgrid.appendChild(h);bgrid.appendChild(document.createElement('div'))}
   for(let c=0;c<n;c++){
    if(c===n-4){const d=document.createElement('div');d.className='div';bgrid.appendChild(d)}
    const el=document.createElement('div');el.className='tile';el.dataset.i=r*n+c;
