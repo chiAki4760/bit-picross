@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ビット・ピクロス</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+:root{--t:min(8.6vw,46px);}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{min-height:100vh;background:#14122b radial-gradient(circle at 50% -10%,#3a2f7a,#14122b 65%);color:#f3ead2;
+  font-family:"DotGothic16",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:14px 8px 48px;user-select:none;-webkit-user-select:none}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);z-index:60}
+h1{margin:4px 0 0;font-size:30px;letter-spacing:3px;color:#ffe066;text-shadow:3px 3px 0 #e8384f,6px 6px 0 #2f6fd6}
+.sub{font-size:13px;opacity:.8;margin:6px 0 10px;letter-spacing:1px;text-align:center}
+.tabs{display:flex;gap:4px;margin-bottom:10px;background:#0e0b26;padding:4px;border-radius:12px}
+.tabs button{background:transparent;color:#bfb6e8;box-shadow:none;font-size:15px;padding:7px 16px}
+.tabs button.sel{background:linear-gradient(#ffe066,#f2a71b);color:#2a1a0c;box-shadow:0 2px 0 #9a5a00}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+button{font-family:inherit;font-size:14px;border:none;border-radius:8px;padding:7px 11px;cursor:pointer;color:#2a1a0c;
+  background:linear-gradient(#fff3cf,#e6c98c);box-shadow:0 3px 0 #7a4d1e,inset 1px 1px 0 #fff}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #7a4d1e}
+button.sel{background:linear-gradient(#ffe066,#f2a71b);box-shadow:0 3px 0 #9a5a00,inset 1px 1px 0 #fff8c8}
+button.dark{background:linear-gradient(#4a3f8a,#2d2660);color:#f3ead2;box-shadow:0 3px 0 #120f2a}
+.view{display:none;flex-direction:column;align-items:center;width:100%}
+.view.show{display:flex}
+.stage{font-size:16px;margin:6px 0 10px;color:#bfe9ff;text-shadow:0 0 6px #5ad1e8;display:flex;gap:14px;align-items:center}
+.timer{color:#ffe9a8;text-shadow:none;font-size:14px;background:#0e0b26;padding:2px 8px;border-radius:6px}
+/* tray */
+.tray{padding:calc(var(--t)*.32);border-radius:16px;
+  background:linear-gradient(135deg,#9a5f2c,#6a3a17 45%,#8b522a);
+  box-shadow:0 10px 24px rgba(0,0,0,.6),inset 0 0 0 3px #d9a440,inset 0 0 0 6px #5a2f10,inset 3px 3px 10px rgba(255,220,160,.3)}
+.inner{background:#3b2210;border-radius:10px;padding:calc(var(--t)*.14);box-shadow:inset 3px 3px 8px rgba(0,0,0,.7)}
+.grid{display:grid;gap:calc(var(--t)*.08);touch-action:none}
+#grid{grid-template-columns:calc(var(--t)*1.55) repeat(4,var(--t)) 6px repeat(4,var(--t))}
+.div{width:6px;border-radius:3px;background:transparent}
+.hexmode .div{background:linear-gradient(#ffe066,#d98e04);box-shadow:0 0 6px #ffcc33}
+.clue{height:var(--t);border-radius:8px;background:#1d1108;box-shadow:inset 2px 2px 4px #000;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;line-height:1;color:#ffe9a8;transition:.2s}
+.clue b{font-size:calc(var(--t)*.44);font-weight:normal}
+.clue b sub{font-size:calc(var(--t)*.2);opacity:.65;margin-left:1px}
+.clue small{font-size:calc(var(--t)*.19);opacity:.6;margin-top:2px}
+.clue.ok{background:#164d25;color:#c9ffd8;box-shadow:inset 0 0 0 2px #4dff88,0 0 10px #4dff88}
+.clue.bad{background:#4d1620;color:#ffc9d2;box-shadow:inset 0 0 0 2px #ff4d6a}
+.clue.colr{height:calc(var(--t)*.9)}
+#bgrid .clue.full{cursor:pointer}
+#bgrid .clue.pick{outline:3px solid #ffe066;outline-offset:1px}
+#bgrid .tile.lit:not(.err){outline:3px solid #ffe066;outline-offset:-3px}
+.brk{display:inline-grid;gap:3px;margin:6px auto 2px;font-family:ui-monospace,Menlo,monospace}
+.brk div{min-width:28px;text-align:center;padding:2px 3px;border-radius:4px;font-size:13px}
+.brk .w{opacity:.65}
+.brk .b1{background:#ffe066;color:#2a1a0c}
+.brk .b0{opacity:.45}
+.brk .gap{min-width:6px;padding:0}
+.ref b{color:#bfe9ff;font-weight:normal;font-size:16px}
+.tile{width:var(--t);height:var(--t);border-radius:calc(var(--t)*.17);position:relative;overflow:hidden;cursor:pointer;
+  background:linear-gradient(145deg,#fffaf0,#ecd7aa);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.95),inset -3px -3px 0 rgba(140,90,30,.35),0 3px 0 #2a1608;
+  display:flex;align-items:center;justify-content:center;color:#a77a3e;font-size:calc(var(--t)*.3);
+  transition:transform .1s,background .15s,opacity .3s}
+.tile::before{content:"";position:absolute;width:52%;height:52%;border-radius:22%;border:1.5px solid rgba(190,140,60,.4);transform:rotate(45deg)}
+.tile span{position:relative;z-index:2;transition:opacity .2s}
+.tile.on{background:linear-gradient(145deg,var(--c1),var(--c2));color:rgba(255,255,255,.92);transform:translateY(2px);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.55),inset -3px -3px 0 rgba(0,0,0,.25),0 1px 0 #2a1608}
+.tile.on::before{border-color:rgba(255,255,255,.55)}
+.tile.on::after{content:"";position:absolute;left:10%;top:7%;width:50%;height:26%;border-radius:50%;background:rgba(255,255,255,.35)}
+.nohint #grid .tile span{opacity:0}
+.tile.rv{transition:background .35s,transform .35s,box-shadow .35s}
+.tile.rv span{opacity:0}
+.tile.blank{background:#2b190b;box-shadow:inset 2px 2px 4px rgba(0,0,0,.6);transform:none}
+.tile.blank::before{border-color:rgba(255,255,255,.04)}
+.tile.blank::after{display:none}
+.tile.px{background:var(--px);transform:none;box-shadow:inset 2px 2px 0 rgba(255,255,255,.45),inset -3px -3px 0 rgba(0,0,0,.28)}
+.tile.px::before{border-color:rgba(255,255,255,.3)}
+/* binairo */
+#bgrid .tile{font-size:calc(var(--t)*.46)}
+#bgrid .tile.zero{color:#8a5f2a}
+#bgrid .tile.hole{background:#24150a;box-shadow:inset 3px 3px 6px rgba(0,0,0,.85);transform:none}
+#bgrid .tile.hole::before{border-color:rgba(255,220,150,.07)}
+#bgrid .tile.given{cursor:default}
+#bgrid .tile.given span{font-weight:bold;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+#bgrid .tile.given.zero{box-shadow:inset 0 0 0 2px #d9a440,inset 2px 2px 0 rgba(255,255,255,.95),inset -3px -3px 0 rgba(140,90,30,.35),0 3px 0 #2a1608}
+#bgrid .tile.given.on{box-shadow:inset 0 0 0 2px #ffe066,inset -3px -3px 0 rgba(0,0,0,.25),0 1px 0 #2a1608}
+#bgrid .tile.err{outline:3px solid #ff3355;outline-offset:-3px}
+#bgrid .tile.flash{animation:pop .5s}
+.ref{margin-top:10px;font-size:13px;opacity:.85;text-align:center;min-height:18px;color:#ffe9a8;max-width:420px}
+.result{margin-top:14px;max-width:420px;width:100%;text-align:center;background:rgba(10,8,30,.75);border:2px solid #ffe066;border-radius:12px;padding:12px;display:none}
+.result h2{margin:0 0 4px;color:#ffe066;font-size:22px}
+.rom{font-family:ui-monospace,Menlo,monospace;font-size:13px;text-align:left;display:inline-block;margin:8px 0;line-height:1.5;color:#bfe9ff}
+.rom i{font-style:normal;color:#ffe066}
+.newrec{color:#4dff88;font-size:15px}
+.modal{position:fixed;inset:0;background:rgba(5,4,15,.82);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
+.modal.open{display:flex}
+.card{background:#1f1a44;border:2px solid #ffe066;border-radius:14px;padding:16px;max-width:440px;width:100%;max-height:85vh;overflow:auto;line-height:1.7;font-size:15px}
+.card h3{margin:0 0 8px;color:#ffe066}
+.card code{background:#0e0b26;padding:1px 5px;border-radius:4px;color:#bfe9ff}
+.coll{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin:8px 0}
+.ci{background:#0e0b26;border-radius:8px;padding:6px;text-align:center;font-size:12px;cursor:pointer;line-height:1.35}
+.ci small{color:#ffe9a8;opacity:.8}
+.mini{display:grid;grid-template-columns:repeat(8,1fr);gap:1px;aspect-ratio:1;margin-bottom:4px}
+.mini div{border-radius:1px}
+.lock{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:30px;color:#4a3f8a;margin-bottom:4px}
+.recs{width:100%;max-width:440px;display:grid;gap:12px}
+.rbox{background:rgba(14,11,38,.85);border:2px solid #4a3f8a;border-radius:12px;padding:12px 14px;line-height:1.7}
+.rbox h3{margin:0 0 6px;color:#ffe066;font-size:17px}
+.rbox table{width:100%;border-collapse:collapse;font-size:14px}
+.rbox td{padding:3px 4px;border-top:1px solid #2d2660}
+.rbox td:last-child{text-align:right;color:#ffe9a8}
+.big{font-size:22px;color:#bfe9ff}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+.pop{animation:pop .35s}
+</style>
+</head>
+<body>
+<h1 id="title">BIT PICROSS</h1>
+<div class="sub">二進数・16進数であそぶパズル</div>
+
+<div class="tabs">
+  <button data-tab="pic">ピクロス</button><button data-tab="bin">ビナイロ</button><button data-tab="rec">きろく</button>
+</div>
+
+<div class="bar" id="modes">
+  <button data-m="10">10進</button><button data-m="16">16進</button><button data-m="mix">ミックス</button>
+</div>
+<div class="bar">
+  <button class="dark" id="hintBtn">ヒント：あり</button>
+  <button class="dark" id="howBtn">しくみ</button>
+  <button class="dark" id="sndBtn">♪ あり</button>
+</div>
+
+<!-- ===== PICROSS ===== -->
+<section class="view" id="v-pic">
+  <div class="bar">
+    <button class="dark" id="collBtn">ずかん</button>
+    <button class="dark" id="clearBtn">けす</button>
+  </div>
+  <div class="stage"><span id="stage"></span><span class="timer" id="ptimer">0:00</span></div>
+  <div class="tray"><div class="inner"><div class="grid" id="grid"></div></div></div>
+  <div class="ref" id="ref"></div>
+  <div class="result" id="result">
+    <h2>CLEAR!</h2>
+    <div id="rname"></div>
+    <div id="rtime"></div>
+    <div class="rom" id="rom"></div>
+    <div style="font-size:13px;opacity:.8;margin-bottom:10px">昔のゲーム機は、こんなふうに絵を数字で保存していました</div>
+    <button id="nextBtn">つぎの絵へ ▶</button>
+  </div>
+</section>
+
+<!-- ===== BINAIRO ===== -->
+<section class="view" id="v-bin">
+  <div class="bar" id="levels">
+    <button data-l="easy">かんたん 6×6</button><button data-l="normal">ふつう 8×8</button><button data-l="hard">むずかしい 8×8</button>
+  </div>
+  <div class="bar">
+    <button class="dark" id="bNew">あたらしい問題</button>
+    <button class="dark" id="bHint">ひとつ教えて</button>
+    <button class="dark" id="bClear">けす</button>
+  </div>
+  <div class="stage"><span id="bstage"></span><span class="timer" id="btimer">0:00</span></div>
+  <div class="tray"><div class="inner"><div class="grid" id="bgrid"></div></div></div>
+  <div class="ref" id="bref">タップで 1 → 0 → 空 と変わります。金のふちは最初からあるタイル。</div>
+  <div class="result" id="bresult">
+    <h2>CLEAR!</h2>
+    <div id="brtime"></div>
+    <div class="rom" id="brom"></div>
+    <div style="font-size:13px;opacity:.8;margin-bottom:10px">完成した盤面の各行を、二進数として読んだ数です</div>
+    <button id="bNext">つぎの問題へ ▶</button>
+  </div>
+</section>
+
+<!-- ===== RECORDS ===== -->
+<section class="view" id="v-rec">
+  <div class="recs" id="recs"></div>
+  <div class="ref" id="saveNote">記録はこのブラウザの中に保存されます</div>
+  <div class="bar" style="margin-top:14px"><button class="dark" id="resetRec">きろくを消す</button></div>
+</section>
+
+<div class="modal" id="howModal"><div class="card" id="howCard"></div></div>
+<div class="modal" id="collModal"><div class="card">
+  <h3>ずかん</h3>
+  <div class="coll" id="coll"></div>
+  <button onclick="closeM()">とじる</button>
+</div></div>
+<div class="modal" id="confirmModal"><div class="card">
+  <h3>きろくを消しますか？</h3>
+  <p>ピクロスのずかんとタイム、ビナイロの記録がすべて消えます。</p>
+  <div class="bar"><button id="resetYes">消す</button><button class="dark" onclick="closeM()">やめる</button></div>
+</div></div>
+
+<script>
+const PAL={R:'#ff4f64',W:'#ffffff',Y:'#ffcc33',O:'#ff8a2a',C:'#5ad8f0',B:'#3a74e0',G:'#3fd06a',N:'#9a5f2c',K:'#2b2b3a',L:'#c9ccd6',P:'#ff9cc0',V:'#cfe8ff',S:'#b9c3cf',M:'#a66cff'};
+const PUZ=[
+ {n:'ライフのハート',p:['.RR..RR.','RWRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.','..RRRR..','...RR...','........']},
+ {n:'きんいろコイン',p:['..YYYY..','.YWYYYY.','YWYYOYYY','YYYYOYYY','YYYYOYYY','YYYYOYYY','.YYYYYY.','..YYYY..']},
+ {n:'ダンジョンの鍵',p:['........','.YYY....','Y...Y...','Y...YYYY','.YYY..Y.','......YY','........','........']},
+ {n:'ひみつの宝石',p:['........','..CCCC..','.CWCCBC.','CCCCCCBB','.CCCCBB.','..CCBB..','...CB...','........']},
+ {n:'むてきの星',p:['...YY...','...YY...','YYYYYYYY','.YYYYYY.','..YYYY..','.YYYYYY.','.YY..YY.','Y......Y']},
+ {n:'回復ポーション',p:['...NN...','...VV...','..V..V..','.VGGGGV.','VGGGGGGV','VGGWGGGV','VGGGGGGV','.VVVVVV.']},
+ {n:'宝箱',p:['........','.NNNNNN.','NNNNNNNN','YYYYYYYY','NNNYYNNN','NNNNNNNN','NNNNNNNN','........']},
+ {n:'王さまの冠',p:['........','Y..YY..Y','YY.YY.YY','YYYYYYYY','YRYBBYRY','YYYYYYYY','........','........']},
+ {n:'ちいさなロケット',p:['...RR...','..WWWW..','..WBBW..','..WWWW..','.RWWWWR.','RRWWWWRR','...OO...','..O..O..']},
+ {n:'ゲームパッド',p:['........','.LLLLLL.','LLKLLLLL','LKKKLLRL','LLKLLRLL','LLLLLLLL','LL....LL','........']},
+ {n:'ドットねこ',p:['O......O','OO....OO','OOOOOOOO','OKOOOOKO','OOOPPOOO','OOOOOOOO','.OOOOOO.','........']},
+ {n:'勇者の剣',p:['...WS...','...WS...','...WS...','...WS...','.YYYYYY.','...NN...','...NN...','...YY...']},
+ {n:'まもりの盾',p:['.BBBBBB.','BBBYYBBB','BBBYYBBB','BYYYYYYB','BBBYYBBB','.BBYYBB.','..BBBB..','...BB...']},
+ {n:'ドクロ',p:['.LLLLLL.','LLLLLLLL','LKKLLKKL','LKKLLKKL','LLLKKLLL','.LLLLLL.','..LKKL..','..LLLL..']},
+ {n:'なぞのUFO',p:['........','...CC...','..CWCC..','.LLLLLL.','LYLLYLLY','.LLLLLL.','..G..G..','.G....G.']},
+ {n:'ばくだん',p:['......OY','.....N..','..KKKK..','.KWKKKK.','KWKKKKKK','KKKKKKKK','.KKKKKK.','..KKKK..']},
+ {n:'りんご',p:['....NG..','...NGG..','.RRRRRR.','RRWRRRRR','RWRRRRRR','RRRRRRRR','.RRRRRR.','..RR.RR.']},
+ {n:'ドットさかな',p:['........','..BBB...','.BBBBB.B','BKBBBBBB','BBBBBBBB','.BBBBB.B','..BBB...','........']},
+ {n:'8ビットの音符',p:['...MMMMM','...MMMMM','...M...M','...M...M','.MMM.MMM','MMMMMMMM','MMM.MMM.','........']},
+ {n:'いなずま',p:['....YY..','...YY...','..YY....','.YYYYYY.','....YY..','...YY...','..YY....','.Y......']},
+ {n:'おてつだいロボ',p:['...RR...','..LLLL..','.LCLLCL.','.LLLLLL.','.LKKKKL.','..LLLL..','.LLLLLL.','.L.LL.L.']},
+ {n:'はじまりの家',p:['...RR...','..RRRR..','.RRRRRR.','RRRRRRRR','.WWWWWW.','.WBWWNW.','.WWWWNW.','.WWWWNW.']},
+ {n:'森の木',p:['...GG...','..GGGG..','.GGGGGG.','GGGGGGGG','.GGGGGG.','GGGGGGGG','...NN...','...NN...']},
+ {n:'三日月',p:['..YYY...','.YYY....','YYY.....','YY......','YY......','YYY.....','.YYY....','..YYY...']},
+ {n:'ゴールの旗',p:['.RRRR...','.RRRRRR.','.RRRR...','.N......','.N......','.N......','.N......','NNN.....']}
+];
+const JEWEL=[['#ff6b8a','#c2185b'],['#ffa94d','#d9480f'],['#ffd43b','#e67700'],['#69db7c','#2b8a3e'],['#4dd4e6','#0b7285'],['#74a8ff','#1c4fd6'],['#b197fc','#6741d9'],['#f783ac','#a61e4d']];
+const LV={easy:{n:6,target:12,name:'かんたん 6×6'},normal:{n:8,target:26,name:'ふつう 8×8'},hard:{n:8,target:0,name:'むずかしい 8×8'}};
+
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let mode=ls.get('bp_mode','10'), hint=ls.get('bp_hint',true), snd=ls.get('bp_snd',true), cleared=ls.get('bp_clear',[]);
+let prec=ls.get('bp_prec',{}), brec=ls.get('bp_brec',{}), tab=ls.get('bp_tab','pic'), level=ls.get('bp_level','easy');
+let idx=PUZ.findIndex((_,i)=>!cleared.includes(i)); if(idx<0) idx=0;
+let resetAt=ls.get('bp_resetAt',0);
+
+/* ===== アカウントへの保存（ブラウザの保存が消えても残るように） ===== */
+let cloud=null,cloudBusy=false,cloudAgain=false;
+function saveLocal(){ls.set('bp_clear',cleared);ls.set('bp_prec',prec);ls.set('bp_brec',brec);ls.set('bp_resetAt',resetAt)}
+function saveCloud(){
+ if(!cloud)return;if(cloudBusy){cloudAgain=true;return}cloudBusy=true;
+ cloud.set({v:1,cleared,prec,brec,resetAt,t:Date.now()}).catch(()=>{})
+  .finally(()=>{cloudBusy=false;if(cloudAgain){cloudAgain=false;saveCloud()}});
+}
+function mergeRec(d){
+ (Array.isArray(d.cleared)?d.cleared:[]).forEach(i=>{if(Number.isInteger(i)&&i>=0&&i<PUZ.length&&!cleared.includes(i))cleared.push(i)});
+ const num=x=>typeof x==='number'&&isFinite(x)?x:null;
+ const P=d.prec&&typeof d.prec==='object'?d.prec:{};
+ for(const k in P){const b=P[k];if(!b||typeof b!=='object'||!(+k>=0&&+k<PUZ.length))continue;
+  const a=prec[k]||(prec[k]={best:null,plays:0});a.plays=Math.max(a.plays||0,num(b.plays)||0);
+  const bb=num(b.best);if(bb!=null&&(a.best==null||bb<a.best))a.best=bb}
+ const R=d.brec&&typeof d.brec==='object'?d.brec:{};
+ for(const k of ['easy','normal','hard']){const b=R[k];if(!b||typeof b!=='object')continue;
+  const a=brec[k]||(brec[k]={clears:0,best:null,bestNoHint:null});a.clears=Math.max(a.clears||0,num(b.clears)||0);
+  for(const f of ['best','bestNoHint']){const v=num(b[f]);if(v!=null&&(a[f]==null||v<a[f]))a[f]=v}}
+}
+function setSaveNote(t){const el=document.getElementById('saveNote');if(el)el.textContent=t}
+(async()=>{
+ try{
+  for(let k=0;k<30&&!(window.claude&&window.claude.use);k++)await new Promise(r=>setTimeout(r,100));
+  if(!(window.claude&&window.claude.use))return;
+  const db=await window.claude.use('db'),user=await window.claude.use('user');if(!db||!user)return;
+  const id=await user.id();if(!id)return;
+  const ref=db.collection('data/users/'+id).doc('bitpicross');
+  const s=await ref.get();const d=s.exists?s.data():null;
+  cloud=ref;
+  if(d&&(+d.resetAt||0)>resetAt){cleared=[];prec={};brec={};resetAt=+d.resetAt}
+  const remote=d?JSON.stringify([d.cleared||[],d.prec||{},d.brec||{}]):'';
+  if(d)mergeRec(d);
+  saveLocal();
+  if(JSON.stringify([cleared,prec,brec])!==remote)saveCloud();
+  setSaveNote('記録はClaudeのアカウントに保存されます（スマホとパソコンで共通）');
+  render();if(tab==='rec')renderRecs();
+ }catch(e){}
+})();
+
+const $=id=>document.getElementById(id);
+function fmtT(s){s=Math.floor(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function fmt(v,b,w){return b===16?v.toString(16).toUpperCase().padStart(w||2,'0'):String(v)}
+function bitsVal(arr){let v=0;for(const x of arr)v=v*2+(x?1:0);return v}
+
+let ac;
+function beep(f,d=.06,type='square',vol=.05){if(!snd)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+ const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;o.connect(g);g.connect(ac.destination);
+ const t=ac.currentTime;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.02)}catch(e){}}
+function jingle(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.15,'square',.06),300+i*120))}
+
+/* timers */
+function Timer(el){let t0=0,iv=null,acc=0;return{
+ start(){if(iv)return;t0=Date.now();iv=setInterval(()=>el.textContent=fmtT(this.sec()),500)},
+ stop(){if(iv){acc+=(Date.now()-t0)/1000;clearInterval(iv);iv=null}el.textContent=fmtT(acc)},
+ reset(){if(iv)clearInterval(iv);iv=null;acc=0;el.textContent='0:00'},
+ sec(){return acc+(iv?(Date.now()-t0)/1000:0)},running(){return !!iv}}}
+const pT=Timer($('ptimer')), bT=Timer($('btimer'));
+
+/* ================= PICROSS ================= */
+const grid=$('grid');
+let tiles=[],clues=[],state,targets,done=false;
+function baseOf(r){if(mode==='mix')return ((idx*7+r*3)%5)<2?16:10;return +mode}
+function weights(b){return b===16?[8,4,2,1,8,4,2,1]:[128,64,32,16,8,4,2,1]}
+function rowVal(s){let v=0;for(const ch of s)v=v*2+(ch!=='.'?1:0);return v}
+
+function build(){
+ grid.innerHTML='';tiles=[];clues=[];done=false;pT.reset();
+ const P=PUZ[idx];targets=P.p.map(rowVal);
+ state=Array.from({length:8},()=>Array(8).fill(0));
+ for(let r=0;r<8;r++){
+  const c=document.createElement('div');c.className='clue';grid.appendChild(c);clues.push(c);
+  tiles.push([]);
+  for(let k=0;k<8;k++){
+   if(k===4){const d=document.createElement('div');d.className='div';grid.appendChild(d)}
+   const t=document.createElement('div');t.className='tile';t.dataset.r=r;t.dataset.c=k;
+   t.style.setProperty('--c1',JEWEL[r][0]);t.style.setProperty('--c2',JEWEL[r][1]);
+   t.innerHTML='<span></span>';grid.appendChild(t);tiles[r].push(t);
+  }
+ }
+ $('result').style.display='none';
+ render();
+}
+function render(){
+ document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('sel',b.dataset.m===mode));
+ $('hintBtn').textContent='ヒント：'+(hint?'あり':'なし');
+ $('sndBtn').textContent='♪ '+(snd?'あり':'なし');
+ document.body.classList.toggle('nohint',!hint);
+ document.querySelectorAll('.inner').forEach(el=>el.classList.toggle('hexmode',mode!=='10'));
+ const P=PUZ[idx];
+ $('stage').textContent=`No.${idx+1}/${PUZ.length}　${cleared.includes(idx)||done?P.n:'？？？'}`;
+ for(let r=0;r<8;r++){
+  const b=baseOf(r),w=weights(b),cur=bitsVal(state[r]);
+  clues[r].innerHTML=`<b>${fmt(targets[r],b)}<sub>${b}</sub></b><small>いま ${fmt(cur,b)}</small>`;
+  clues[r].classList.toggle('ok',cur===targets[r]);
+  for(let k=0;k<8;k++){const t=tiles[r][k];t.firstChild.textContent=w[k];if(!done)t.classList.toggle('on',!!state[r][k])}
+ }
+ $('ref').textContent=(hint&&mode!=='10')?'A=10　B=11　C=12　D=13　E=14　F=15':(hint?'タイルの数字を足して、左の数字にしよう（なぞると続けてうめられます）':'');
+}
+function setCell(r,c,v){
+ if(state[r][c]===v)return;state[r][c]=v;pT.start();
+ const before=clues[r].classList.contains('ok');
+ render();
+ const now=clues[r].classList.contains('ok');
+ if(now&&!before){clues[r].classList.remove('pop');void clues[r].offsetWidth;clues[r].classList.add('pop');beep(880,.08);setTimeout(()=>beep(1320,.1),70)}
+ else beep(v?520:330,.04);
+ check();
+}
+function check(){
+ for(let r=0;r<8;r++)if(bitsVal(state[r])!==targets[r])return;
+ done=true;pT.stop();const sec=Math.round(pT.sec());
+ if(!cleared.includes(idx)){cleared.push(idx);ls.set('bp_clear',cleared)}
+ const rec=prec[idx]||{best:null,plays:0};rec.plays++;const isBest=rec.best==null||sec<rec.best;if(isBest)rec.best=sec;prec[idx]=rec;ls.set('bp_prec',prec);saveCloud();
+ const P=PUZ[idx];
+ for(let r=0;r<8;r++)for(let k=0;k<8;k++){
+  const t=tiles[r][k],ch=P.p[r][k];
+  setTimeout(()=>{t.classList.add('rv');t.classList.remove('on');
+   if(ch==='.')t.classList.add('blank');else{t.style.setProperty('--px',PAL[ch]);t.classList.add('px')}
+  },(r+k)*45);
+ }
+ jingle();
+ setTimeout(()=>{
+  render();
+  $('rname').textContent=`「${P.n}」が完成！`;
+  $('rtime').innerHTML=`タイム ${fmtT(sec)}`+(isBest&&rec.plays>1?' <span class="newrec">ベスト更新！</span>':'')+(rec.plays===1?'':`（ベスト ${fmtT(rec.best)}）`);
+  $('rom').innerHTML=targets.map(v=>`<i>${fmt(v,16)}</i>  ${v.toString(2).padStart(8,'0').replace(/0/g,'·').replace(/1/g,'■')}  ${String(v).padStart(3,' ')}`).join('<br>').replace(/ /g,'&nbsp;');
+  const res=$('result');res.style.display='block';res.scrollIntoView({behavior:'smooth',block:'nearest'});
+ },900);
+}
+let painting=false,paintV=1;
+grid.addEventListener('pointerdown',e=>{
+ const t=e.target.closest('.tile');if(!t||done)return;
+ e.preventDefault();painting=true;const r=+t.dataset.r,c=+t.dataset.c;paintV=state[r][c]?0:1;setCell(r,c,paintV);
+});
+window.addEventListener('pointermove',e=>{if(!painting||done)return;const el=document.elementFromPoint(e.clientX,e.clientY);const t=el&&el.closest?el.closest('.tile'):null;if(t&&grid.contains(t))setCell(+t.dataset.r,+t.dataset.c,paintV)});
+window.addEventListener('pointerup',()=>painting=false);
+window.addEventListener('pointercancel',()=>painting=false);
+$('clearBtn').onclick=()=>{if(done)return;state=state.map(r=>r.map(()=>0));beep(220,.1);render()};
+$('nextBtn').onclick=()=>{idx=(idx+1)%PUZ.length;beep(784);build();window.scrollTo({top:0,behavior:'smooth'})};
+$('collBtn').onclick=()=>{
+ const box=$('coll');box.innerHTML='';
+ PUZ.forEach((P,i)=>{
+  const d=document.createElement('div');d.className='ci';
+  if(cleared.includes(i)){const r=prec[i];d.innerHTML='<div class="mini">'+P.p.join('').split('').map(ch=>`<div style="background:${ch==='.'?'#1a1638':PAL[ch]}"></div>`).join('')+`</div>${P.n}`+(r&&r.best!=null?`<br><small>ベスト ${fmtT(r.best)}</small>`:'')}
+  else d.innerHTML=`<div class="lock">?</div>No.${i+1}`;
+  d.onclick=()=>{idx=i;closeM();build()};box.appendChild(d);
+ });
+ $('collModal').classList.add('open');
+};
+
+/* ================= BINAIRO ================= */
+function makeSolver(n){
+ function ok(g,i){const r=(i/n)|0,c=i%n,v=g[i];
+  for(let s=c-2;s<=c;s++){if(s<0||s+2>=n)continue;if(g[r*n+s]===v&&g[r*n+s+1]===v&&g[r*n+s+2]===v)return false}
+  for(let s=r-2;s<=r;s++){if(s<0||s+2>=n)continue;if(g[s*n+c]===v&&g[(s+1)*n+c]===v&&g[(s+2)*n+c]===v)return false}
+  let z=0,o=0;for(let k=0;k<n;k++){const x=g[r*n+k];if(x===0)z++;else if(x===1)o++}
+  if(z>n/2||o>n/2)return false;
+  if(z+o===n){for(let rr=0;rr<n;rr++){if(rr===r)continue;let same=true;for(let k=0;k<n;k++){if(g[rr*n+k]!==g[r*n+k]){same=false;break}}if(same)return false}}
+  z=0;o=0;for(let k=0;k<n;k++){const x=g[k*n+c];if(x===0)z++;else if(x===1)o++}
+  if(z>n/2||o>n/2)return false;
+  if(z+o===n){for(let cc=0;cc<n;cc++){if(cc===c)continue;let same=true;for(let k=0;k<n;k++){if(g[k*n+cc]!==g[k*n+c]){same=false;break}}if(same)return false}}
+  return true}
+ function count(g,limit,rand){const cells=[];for(let i=0;i<n*n;i++)if(g[i]<0)cells.push(i);let cnt=0,sol=null;
+  (function rec(k){if(cnt>=limit)return;if(k===cells.length){cnt++;if(!sol)sol=g.slice();return}
+   const i=cells[k];const vs=rand&&Math.random()<.5?[1,0]:[0,1];
+   for(const v of vs){g[i]=v;if(ok(g,i))rec(k+1);if(cnt>=limit)break}g[i]=-1})(0);
+  return {cnt,sol}}
+ return {count};
+}
+function genBin(n,target){const S=makeSolver(n);const full=S.count(Array(n*n).fill(-1),1,true).sol;
+ const g=full.slice();const order=[...Array(n*n).keys()].sort(()=>Math.random()-.5);let givens=n*n;
+ for(const i of order){if(givens<=target)break;const v=g[i];g[i]=-1;if(S.count(g.slice(),2).cnt!==1)g[i]=v;else givens--}
+ return {puzzle:g,sol:full}}
+
+const bgrid=$('bgrid');
+let B=null; // {n,given[],sol[],cur[],done,hints,cells[],rowR[],colR[],seed}
+function bBase(i){if(mode==='mix')return i%2?16:10;return +mode}
+function newBin(){
+ const L=LV[level],n=L.n;const {puzzle,sol}=genBin(n,L.target);
+ B={n,given:puzzle.map(x=>x>=0),sol,cur:puzzle.slice(),done:false,hints:0};
+ bT.reset();$('bresult').style.display='none';buildBin();
+}
+function buildBin(){
+ const n=B.n;bgrid.innerHTML='';B.cells=[];B.rowR=[];B.colR=[];
+ const t=n===6?'min(11vw,54px)':'min(8.6vw,46px)';bgrid.style.setProperty('--t',t);
+ bgrid.parentElement.style.setProperty('--t',t);bgrid.parentElement.parentElement.style.setProperty('--t',t);
+ bgrid.style.gridTemplateColumns=`repeat(${n-4},var(--t)) 6px repeat(4,var(--t)) calc(var(--t)*1.35)`;
+ for(let r=0;r<n;r++){
+  for(let c=0;c<n;c++){
+   if(c===n-4){const d=document.createElement('div');d.className='div';bgrid.appendChild(d)}
+   const el=document.createElement('div');el.className='tile';el.dataset.i=r*n+c;
+   el.style.setProperty('--c1',JEWEL[r%8][0]);el.style.setProperty('--c2',JEWEL[r%8][1]);
+   el.innerHTML='<span></span>';bgrid.appendChild(el);B.cells.push(el);
+  }
+  const rr=document.createElement('div');rr.className='clue';bgrid.appendChild(rr);B.rowR.push(rr);
+ }
+ for(let c=0;c<n;c++){
+  if(c===n-4){bgrid.appendChild(document.createElement('div'))}
+  const cr=document.createElement('div');cr.className='clue colr';bgrid.appendChild(cr);B.colR.push(cr);
+ }
+ bgrid.appendChild(Object.assign(document.createElement('div'),{className:'clue colr',innerHTML:'<small>↑たて<br>読み</small>'}));
+ renderBin();
+}
+function lineInfo(vals,n){ // vals array of -1/0/1
+ let z=0,o=0;for(const v of vals){if(v===0)z++;else if(v===1)o++}
+ return {z,o,full:z+o===n,over:z>n/2||o>n/2}
+}
+function renderBin(){
+ if(!B)return;const n=B.n,g=B.cur;
+ $('bstage').textContent=LV[level].name+(B.hints?`　ヒント${B.hints}回`:'');
+ const err=new Set();
+ const rows=[],cols=[];
+ for(let r=0;r<n;r++)rows.push(g.slice(r*n,r*n+n));
+ for(let c=0;c<n;c++){const a=[];for(let r=0;r<n;r++)a.push(g[r*n+c]);cols.push(a)}
+ for(let r=0;r<n;r++)for(let c=0;c+2<n;c++){const v=g[r*n+c];if(v>=0&&g[r*n+c+1]===v&&g[r*n+c+2]===v){err.add(r*n+c);err.add(r*n+c+1);err.add(r*n+c+2)}}
+ for(let c=0;c<n;c++)for(let r=0;r+2<n;r++){const v=g[r*n+c];if(v>=0&&g[(r+1)*n+c]===v&&g[(r+2)*n+c]===v){err.add(r*n+c);err.add((r+1)*n+c);err.add((r+2)*n+c)}}
+ const key=a=>a.join('');
+ function paint(el,vals,others,b){
+  const I=lineInfo(vals,n);let html,cls='';
+  if(I.full){const v=bitsVal(vals);const dup=others.filter(x=>key(x)===key(vals)).length>1;
+   let tri=false;for(let k=0;k+2<n;k++)if(vals[k]===vals[k+1]&&vals[k+1]===vals[k+2])tri=true;
+   const bad=I.over||dup||tri;cls=bad?'bad':'ok';
+   html=`<b>${fmt(v,b)}<sub>${b}</sub></b>`+(dup?'<small>同じ並び</small>':I.over?'<small>数がちがう</small>':'');
+  }else{html=I.over?'<b>×</b><small>'+(I.z>n/2?'0':'1')+'が多い</small>':`<small>あと${n-I.z-I.o}</small>`;if(I.over)cls='bad'}
+  el.innerHTML=html;el.classList.remove('ok','bad');if(cls)el.classList.add(cls);
+  el._b=b;el.classList.toggle('full',I.full);
+ }
+ rows.forEach((v,r)=>paint(B.rowR[r],v,rows,bBase(r)));
+ cols.forEach((v,c)=>paint(B.colR[c],v,cols,bBase(c)));
+ B.cells.forEach((el,i)=>{const v=g[i];
+  el.classList.toggle('on',v===1);el.classList.toggle('zero',v===0);el.classList.toggle('hole',v<0);
+  el.classList.toggle('given',B.given[i]);el.classList.toggle('err',err.has(i));
+  el.firstChild.textContent=v<0?'':v;
+ });
+ showBreak();
+}
+function bWin(){
+ const n=B.n,g=B.cur;if(g.some(v=>v<0))return false;
+ const rows=[],cols=[];for(let r=0;r<n;r++)rows.push(g.slice(r*n,r*n+n).join(''));
+ for(let c=0;c<n;c++){let s='';for(let r=0;r<n;r++)s+=g[r*n+c];cols.push(s)}
+ const okL=s=>!/000|111/.test(s)&&s.split('1').length-1===n/2;
+ return rows.every(okL)&&cols.every(okL)&&new Set(rows).size===n&&new Set(cols).size===n;
+}
+function bCheck(){
+ if(!bWin())return;B.done=true;bT.stop();const sec=Math.round(bT.sec());
+ const rec=brec[level]||{clears:0,best:null,bestNoHint:null};rec.clears++;
+ const isBest=rec.best==null||sec<rec.best;if(isBest)rec.best=sec;
+ if(!B.hints&&(rec.bestNoHint==null||sec<rec.bestNoHint))rec.bestNoHint=sec;
+ brec[level]=rec;ls.set('bp_brec',brec);saveCloud();
+ B.cells.forEach((el,i)=>setTimeout(()=>{el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')},((i/B.n|0)+i%B.n)*50));
+ jingle();
+ const n=B.n;
+ $('brtime').innerHTML=`タイム ${fmtT(sec)}`+(B.hints?`（ヒント${B.hints}回）`:'（ヒントなし）')+(isBest&&rec.clears>1?' <span class="newrec">ベスト更新！</span>':'');
+ const lines=[];for(let r=0;r<n;r++){const a=B.cur.slice(r*n,r*n+n);const v=bitsVal(a);
+  lines.push(`<i>${fmt(v,16)}</i>  ${a.join('')}  ${String(v).padStart(3,' ')}`)}
+ $('brom').innerHTML=lines.join('<br>').replace(/ /g,'&nbsp;');
+ setTimeout(()=>{$('bresult').style.display='block';$('bresult').scrollIntoView({behavior:'smooth',block:'nearest'})},700);
+}
+bgrid.addEventListener('pointerdown',e=>{
+ const el=e.target.closest('.tile');if(!el||!B||B.done)return;const i=+el.dataset.i;if(B.given[i])return;
+ e.preventDefault();const v=B.cur[i];B.cur[i]=v<0?1:v===1?0:-1;bT.start();
+ beep(B.cur[i]===1?600:B.cur[i]===0?440:300,.04);renderBin();bCheck();
+});
+const BREF0='タップで 1 → 0 → 空 と変わります。金のふちは最初からあるタイル。<br>うまった行・列の数字をタップすると、計算の内訳が出ます。';
+bgrid.addEventListener('click',e=>{
+ const el=e.target.closest('.clue');if(!el||!B)return;
+ const r=B.rowR.indexOf(el),c=B.colR.indexOf(el);let p;
+ if(r>=0)p={k:'r',i:r};else if(c>=0)p={k:'c',i:c};else return;
+ if(!el.classList.contains('full'))return;
+ B.pick=(B.pick&&B.pick.k===p.k&&B.pick.i===p.i)?null:p;beep(700,.05);showBreak();
+});
+function showBreak(){
+ const ref=$('bref'),n=B.n;
+ B.cells.forEach(el=>el.classList.remove('lit'));B.rowR.concat(B.colR).forEach(el=>el.classList.remove('pick'));
+ const p=B.pick,el=p&&(p.k==='r'?B.rowR:B.colR)[p.i];
+ if(!p||!el.classList.contains('full')){B.pick=null;ref.innerHTML=BREF0;return}
+ el.classList.add('pick');
+ const idxs=[...Array(n).keys()].map(k=>p.k==='r'?p.i*n+k:k*n+p.i);
+ idxs.forEach(i=>B.cells[i].classList.add('lit'));
+ const vals=idxs.map(i=>B.cur[i]),b=el._b,v=bitsVal(vals),split=n-4;
+ const wt=k=>b===16&&k<split?2**(split-1-k):2**(n-1-k);
+ let top='',bot='';
+ vals.forEach((x,k)=>{if(b===16&&k===split){top+='<div class="gap"></div>';bot+='<div class="gap"></div>'}
+  top+=`<div class="w">${wt(k)}</div>`;bot+=`<div class="b${x}">${x}</div>`});
+ const sum=ks=>{const t=ks.filter(k=>vals[k]).map(wt);if(!t.length)return '0';return t.join(' + ')+(t.length>1?' = '+t.reduce((a,c)=>a+c,0):'')};
+ const all=[...Array(n).keys()];
+ const name=p.k==='r'?`よこ ${p.i+1}行目`:`たて ${p.i+1}列目（上から読む）`;
+ let calc;
+ if(b===16){const lv=bitsVal(vals.slice(0,split)),rv=bitsVal(vals.slice(split));
+  calc=`左${split}枚：${sum(all.slice(0,split))} → ${lv.toString(16).toUpperCase()}<br>右4枚：${sum(all.slice(split))} → ${rv.toString(16).toUpperCase()}<br>16進数で <b>${fmt(v,16)}</b>（十進法では ${v}）`;
+ }else calc=`${sum(all)}<br>十進法で <b>${v}</b>`;
+ ref.innerHTML=`${name}：${vals.join('')}<br><div class="brk" style="grid-template-columns:repeat(${n+(b===16?1:0)},auto)">${top}${bot}</div><br>${calc}`;
+}
+$('bNew').onclick=()=>{beep(784);newBin()};
+$('bNext').onclick=()=>{beep(784);newBin();window.scrollTo({top:0,behavior:'smooth'})};
+$('bClear').onclick=()=>{if(!B||B.done)return;B.cur=B.cur.map((v,i)=>B.given[i]?v:-1);beep(220,.1);renderBin()};
+$('bHint').onclick=()=>{
+ if(!B||B.done)return;const n=B.n;
+ let cand=[];B.cur.forEach((v,i)=>{if(!B.given[i]&&v>=0&&v!==B.sol[i])cand.push(i)});
+ if(!cand.length)B.cur.forEach((v,i)=>{if(v<0)cand.push(i)});
+ if(!cand.length)return;const i=cand[Math.floor(Math.random()*cand.length)];
+ B.cur[i]=B.sol[i];B.hints++;bT.start();beep(988,.1,'triangle',.08);renderBin();
+ const el=B.cells[i];el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');bCheck();
+};
+document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{level=b.dataset.l;ls.set('bp_level',level);beep(660);markLevels();newBin()});
+function markLevels(){document.querySelectorAll('#levels button').forEach(b=>b.classList.toggle('sel',b.dataset.l===level))}
+
+/* ================= RECORDS ================= */
+function renderRecs(){
+ const total=Object.values(prec).reduce((a,r)=>a+(r.plays||0),0);
+ let bestRows=PUZ.map((P,i)=>prec[i]&&prec[i].best!=null?`<tr><td>No.${i+1} ${P.n}</td><td>${fmtT(prec[i].best)}</td></tr>`:'').join('');
+ let html=`<div class="rbox"><h3>ピクロス</h3>
+  <div>ずかん <span class="big">${cleared.length}</span> / ${PUZ.length}　　クリア回数 <span class="big">${total}</span></div>
+  ${bestRows?`<table>${bestRows}</table>`:'<div style="opacity:.7">まだクリアした絵はありません</div>'}</div>`;
+ html+=`<div class="rbox"><h3>ビナイロ</h3><table>`;
+ for(const k of ['easy','normal','hard']){const r=brec[k];
+  html+=`<tr><td>${LV[k].name}</td><td>${r?`${r.clears}回クリア`:'—'}</td></tr>`;
+  if(r)html+=`<tr><td style="padding-left:14px;opacity:.85">ベスト／ヒントなしベスト</td><td>${r.best!=null?fmtT(r.best):'—'} ／ ${r.bestNoHint!=null?fmtT(r.bestNoHint):'—'}</td></tr>`;
+ }
+ html+=`</table></div>`;
+ $('recs').innerHTML=html;
+}
+$('resetRec').onclick=()=>$('confirmModal').classList.add('open');
+$('resetYes').onclick=()=>{cleared=[];prec={};brec={};resetAt=Date.now();saveLocal();saveCloud();closeM();renderRecs();render()};
+
+/* ================= SHARED ================= */
+const HOW={
+ pic:`<h3>ピクロスのしくみ</h3>
+  <p>タイルには「重さ」がついています。右から <code>1・2・4・8</code>… と、左へ行くたびに2倍になります。</p>
+  <p>左の数字になるように、タイルを選んで足し算します。<br>例：<code>13</code> = 8 + 4 + 1<br>→ タイルは <code>00001101</code>（1が「うめる」）</p>
+  <p>これが<b>二進数</b>。コンピュータは全部これで数を数えています。</p>
+  <h3>16進数</h3>
+  <p>タイル4枚で 0〜15 を表せます。10以上は1文字で書くために英字を使います。<br><code>A=10 B=11 C=12 D=13 E=14 F=15</code></p>
+  <p>16進モードでは、金の線で左右4枚ずつに分かれます。<code>3C</code> なら、左4枚で <code>3</code>（2+1）、右4枚で <code>C</code>（8+4）。</p>
+  <p>「ヒント」を消すとタイルの数字が隠れます。</p>`,
+ bin:`<h3>ビナイロのルール</h3>
+  <p>すべてのマスを <code>1</code>（色のタイル）か <code>0</code>（白いタイル）でうめます。</p>
+  <p>① 同じ数字が <b>3つ続いてはいけない</b>（たて・よこ）<br>② どの行・列も、<b>1と0が同じ数</b><br>③ <b>まったく同じ並び</b>の行（列）を2つ作ってはいけない</p>
+  <p>コツ：<code>1 1 _</code> の横は必ず <code>0</code>。<code>1 _ 1</code> の間も <code>0</code>。</p>
+  <h3>二進数として読む</h3>
+  <p>うめ終わった行は、右に<b>二進数として読んだ数</b>が出ます。下の数字は、列を上から読んだ数です。16進モードでは金の線の右4枚が1けた目、左が2けた目になります。</p>
+  <p>赤くなったら、どこかがルール違反です。</p>
+  <p>うまった行・列の数字をタップすると、「32 + 16 + 8 = 56」のような<b>計算の内訳</b>が下に出ます。もう一度タップで閉じます。</p>`
+};
+$('howBtn').onclick=()=>{$('howCard').innerHTML=HOW[tab==='bin'?'bin':'pic']+'<button onclick="closeM()">とじる</button>';$('howModal').classList.add('open')};
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;ls.set('bp_mode',mode);beep(660);render();renderBin()});
+$('hintBtn').onclick=()=>{hint=!hint;ls.set('bp_hint',hint);beep(660);render()};
+$('sndBtn').onclick=()=>{snd=!snd;ls.set('bp_snd',snd);beep(660);render()};
+function closeM(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'))}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeM()}));
+function showTab(t){
+ tab=t;ls.set('bp_tab',t);
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('sel',b.dataset.tab===t));
+ ['pic','bin','rec'].forEach(k=>$('v-'+k).classList.toggle('show',k===t));
+ $('title').textContent={pic:'BIT PICROSS',bin:'BIT BINAIRO',rec:'RECORDS'}[t];
+ $('modes').style.display=t==='rec'?'none':'flex';
+ $('hintBtn').style.display=t==='pic'?'':'none';
+ $('howBtn').style.display=t==='rec'?'none':'';
+ if(t==='bin'&&!B)newBin();
+ if(t==='rec')renderRecs();
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{beep(660);showTab(b.dataset.tab)});
+markLevels();build();showTab(tab);
+</script>
+</body>
+</html>
