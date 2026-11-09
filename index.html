@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ビット・ピクロス</title>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 <style>
 :root{--t:min(8.6vw,46px);}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
+html,body{margin:0;touch-action:manipulation}
+button,.tray,.inner,.tabs,.bar{touch-action:manipulation}
 body{min-height:100vh;background:#14122b radial-gradient(circle at 50% -10%,#3a2f7a,#14122b 65%);color:#f3ead2;
   font-family:"DotGothic16",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:14px 8px 48px;user-select:none;-webkit-user-select:none}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);z-index:60}
@@ -191,6 +192,13 @@ button.dark{background:linear-gradient(#4a3f8a,#2d2660);color:#f3ead2;box-shadow
 </div></div>
 
 <script>
+/* ダブルタップで画面が拡大しないようにする */
+(function(){let last=0;
+ document.addEventListener('touchend',e=>{const now=Date.now();
+  if(now-last<400&&e.cancelable)e.preventDefault();last=now},{passive:false});
+ document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+ document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+})();
 const PAL={R:'#ff4f64',W:'#ffffff',Y:'#ffcc33',O:'#ff8a2a',C:'#5ad8f0',B:'#3a74e0',G:'#3fd06a',N:'#9a5f2c',K:'#2b2b3a',L:'#c9ccd6',P:'#ff9cc0',V:'#cfe8ff',S:'#b9c3cf',M:'#a66cff'};
 const PUZ=[
  {n:'ライフのハート',p:['.RR..RR.','RWRRRRRR','RRRRRRRR','RRRRRRRR','.RRRRRR.','..RRRR..','...RR...','........']},
